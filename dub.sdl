@@ -1,0 +1,6 @@
+name "rabbitmq"
+description "Binding for librabbitmq"
+authors "Laeeth Isharc"
+copyright "Copyright © 2017, Laeeth Isharc and Kaleidic Associates"
+license "Boost"
+dependency "openssl" version="*"
