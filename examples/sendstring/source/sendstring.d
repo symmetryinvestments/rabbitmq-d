@@ -14,6 +14,7 @@ struct Options
 	string exchange;
 	string routingKey;
 	string messageBody;
+	bool useSSL = false;
 	string caCert;
 	bool verifyPeer;
 	bool verifyHostname;
@@ -35,6 +36,7 @@ int main(string[] args)
 					"exchange",	&options.exchange,
 					"routing-key",	&options.routingKey,
 					"message-body",	&options.messageBody,
+					"use-ssl",	&options.useSSL,
 					"cacert",	&options.caCert,
 					"verify-peer",	&options.verifyPeer,
 					"verify-hostname", &options.verifyHostname,
@@ -49,24 +51,27 @@ int main(string[] args)
 	}
 
 	conn = amqp_new_connection();
-	socket = amqp_ssl_socket_new(conn);
-	enforce(socket !is null, "creating ssl/tls socket");
+	socket = options.useSSL ? amqp_ssl_socket_new(conn): amqp_tcp_socket_new(conn);
+	enforce(socket !is null, options.useSSL? "creating ssl/tls socket" : "creating tcp socket");
 
-	amqp_ssl_socket_set_verify_peer(socket, options.verifyPeer ? 1:0);
-	amqp_ssl_socket_set_verify_hostname(socket, options.verifyHostname ? 1: 0);
-
-	if(options.caCert.length > 0)
+	if(options.useSSL)
 	{
-		enforce(amqp_ssl_socket_set_cacert(socket, options.caCert.toStringz) == 0, "setting CA certificate");
+		amqp_ssl_socket_set_verify_peer(socket, options.verifyPeer ? 1:0);
+		amqp_ssl_socket_set_verify_hostname(socket, options.verifyHostname ? 1: 0);
+
+		if(options.caCert.length > 0)
+		{
+			enforce(amqp_ssl_socket_set_cacert(socket, options.caCert.toStringz) == 0, "setting CA certificate");
+		}
+
+		if (options.keyFile.length > 0)
+		{
+			enforce(options.certFile.length > 0, "if you specify key-file you must also specify cert-file");
+			enforce(amqp_ssl_socket_set_key(socket, options.certFile.toStringz, options.keyFile.toStringz) == 0, "setting client cert");
+		}
 	}
 
-	if (options.keyFile.length > 0)
-	{
-		enforce(options.certFile.length > 0, "if you specify key-file you must also specify cert-file");
-		enforce(amqp_ssl_socket_set_key(socket, options.certFile.toStringz, options.keyFile.toStringz) == 0, "setting client cert");
-	}
-
-	enforce(amqp_socket_open(socket, options.hostname.toStringz, options.port) == 0, "opening SSL/TLS connection");
+	enforce(amqp_socket_open(socket, options.hostname.toStringz, options.port) == 0, "opening connection");
 
 	die_on_amqp_error(amqp_login(conn, "/".ptr, 0, 131072, 0, SaslMethod.plain, "guest".ptr, "guest".ptr), "Logging in");
 	amqp_channel_open(conn, 1);

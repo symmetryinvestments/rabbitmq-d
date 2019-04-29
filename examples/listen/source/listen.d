@@ -11,9 +11,10 @@ import kaleidic.api.rabbitmq.utils;
 struct Options
 {
 	string hostname;
-	ushort port;
+	int port;
 	string exchange;
 	string bindingKey;
+	bool useSSL = false;
 	string caCert;
 	bool verifyPeer = false;
 	bool verifyHostname = false;
@@ -38,6 +39,7 @@ int main(string[] args)
 					std.getopt.config.required,
 					"exchange",	&options.exchange,
 					std.getopt.config.required,
+					"use-ssl",	&options.useSSL,
 					"binding-key",	&options.bindingKey,
 					"cacert",	&options.caCert,
 					"verify-peer",	&options.verifyPeer,
@@ -53,28 +55,32 @@ int main(string[] args)
 	}
 
 	conn = amqp_new_connection();
-	socket = amqp_ssl_socket_new(conn);
-	enforce(socket !is null, "creating SSL/TLS socket");
+	socket = options.useSSL ? amqp_ssl_socket_new(conn) : amqp_tcp_socket_new(conn);
+	enforce(socket !is null, options.useSSL? "creating SSL/TLS socket" : "creating TCP socket");
 
-	amqp_ssl_socket_set_verify_peer(socket, options.verifyPeer ? 1: 0);
-	amqp_ssl_socket_set_verify_hostname(socket, options.verifyHostname ? 1 : 0);
-
-	if (options.caCert.length > 0)
+	if (options.useSSL)
 	{
-		enforce(amqp_ssl_socket_set_cacert(socket, options.caCert.toStringz) == 0, "setting CA certificate");
+		amqp_ssl_socket_set_verify_peer(socket, options.verifyPeer ? 1: 0);
+		amqp_ssl_socket_set_verify_hostname(socket, options.verifyHostname ? 1 : 0);
+
+		if (options.caCert.length > 0)
+		{
+			enforce(amqp_ssl_socket_set_cacert(socket, options.caCert.toStringz) == 0, "setting CA certificate");
+		}
+
+		if (options.keyFile.length > 0)
+		{
+			enforce (options.certFile.length > 0, "if you specify key-file you must specify cert-file");
+			enforce( amqp_ssl_socket_set_key(socket, options.certFile.toStringz, options.keyFile.toStringz) == 0, "setting client cert");
+		}
+		else
+		{
+			enforce(options.certFile.length == 0, "you cannot specify cert-file if you do not specify key-file");
+		}
 	}
 
-	if (options.keyFile.length > 0)
-	{
-		enforce (options.certFile.length > 0, "if you specify key-file you must specify cert-file");
-		enforce( amqp_ssl_socket_set_key(socket, options.certFile.toStringz, options.keyFile.toStringz) == 0, "setting client cert");
-	}
-	else
-	{
-		enforce(options.certFile.length == 0, "you cannot specify cert-file if you do not specify key-file");
-	}
-
-	enforce(amqp_socket_open(socket, options.hostname.toStringz, options.port) == 0, "opening SSL/TLS connection");
+	status = amqp_socket_open(socket, options.hostname.toStringz, options.port);
+	enforce(status	== 0, "opening socket: " ~ amqp_error_string2(status).fromStringz);
 
 	die_on_amqp_error(amqp_login(conn, "/".ptr, 0, 131072, 0, SaslMethod.plain, "guest".ptr, "guest".ptr), "Logging in");
 	amqp_channel_open(conn, 1);
@@ -109,15 +115,15 @@ int main(string[] args)
 
 			writefln("Delivery %s, exchange %s routingkey %s",
 			     envelope.delivery_tag,
-			     envelope.exchange.bytes[0..envelope.exchange.len],
-			     envelope.routing_key.bytes[0.. envelope.routing_key.len]);
+			     fromBytes(envelope.exchange.bytes,envelope.exchange.len),
+			     fromBytes(envelope.routing_key.bytes, envelope.routing_key.len));
 
 			if (envelope.message.properties._flags & AMQP_BASIC_CONTENT_TYPE_FLAG) {
-				writefln("Content-type: %*s", envelope.message.properties.content_type.bytes
-						[0 .. envelope.message.properties.content_type.len]);
+				writefln("Content-type: %s", fromBytes(envelope.message.properties.content_type.bytes,
+						envelope.message.properties.content_type.len));
 			}
 			writef("----\n");
-			amqp_dump(cast(ubyte[])(envelope.message.body_.bytes[0 .. envelope.message.body_.len]));
+			amqp_dump(cast(ubyte[])fromBytes(envelope.message.body_.bytes,envelope.message.body_.len));
 			amqp_destroy_envelope(&envelope);
 		}
 	}
@@ -128,3 +134,18 @@ int main(string[] args)
 
 	return 0;
 }
+
+private char[] fromBytes(void* ptr, ulong len)
+{
+	return (cast(char*)ptr)[0..len].dup;
+	/+
+	import std.array:Appender;
+	Appender!(char[]) ret;
+	auto cPtr = cast(char*) ptr;
+	foreach(i; 0 .. len)
+		ret.put(cPtr[len]);
+	writefln("fromBytes: %s, %s, %s ",len, (cast(char*)ptr)[0..len],ret.data);
+	return ret.data;
+	+/
+}
+
