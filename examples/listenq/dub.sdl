@@ -1,0 +1,7 @@
+name "listenq"
+description "A minimal D application."
+authors "laeeth"
+copyright "Copyright © 2019, laeeth"
+license "proprietary"
+targetType "executable"
+dependency "rabbitmq" version="*"
