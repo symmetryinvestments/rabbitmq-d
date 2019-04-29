@@ -2,6 +2,8 @@ import kaleidic.api.rabbitmq;
 import std.stdio;
 import std.ascii;
 import core.stdc.stdarg;
+import std.exception;
+import std.format:format;
 
 void die(const char *fmt, ...);
 extern(C)
@@ -17,16 +19,12 @@ void die(const char *fmt, ...)
   va_start(ap, fmt);
   vfprintf(stderr, fmt, ap);
   va_end(ap);
-  fprintf(stderr, "\n");
-  exit(1);
+  throw new Exception("");
 }
 
 void die_on_error(int x, const(char) *context)
 {
-  if (x < 0) {
-    stderr.writef("%s: %s\n", context, amqp_error_string2(x));
-    exit(1);
-  }
+	enforce(x>=0, format!"%s: %s\n"(context, amqp_error_string2(x)));
 }
 
 void die_on_amqp_error(amqp_rpc_reply_t x, const(char) *context)
@@ -71,7 +69,7 @@ void die_on_amqp_error(amqp_rpc_reply_t x, const(char) *context)
     break;
   }
 
-  exit(1);
+  throw new Exception("");
 }
 
 static void dump_row(long count, int numinrow, int *chs)

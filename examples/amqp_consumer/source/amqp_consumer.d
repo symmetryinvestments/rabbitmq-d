@@ -1,6 +1,7 @@
 module amqp_consumer;
 import std.stdio;
 import std.string;
+import std.conv:to;
 
 import kaleidic.api.rabbitmq;
 import utils;
@@ -106,8 +107,7 @@ void run(amqp_connection_state_t conn)
 
 int main(string[] args)
 {
-  string hostname;
-  int port, status;
+  int status;
   string exchange, bindingKey;
   amqp_socket_t *socket = null;
   amqp_connection_state_t conn;
@@ -120,9 +120,9 @@ int main(string[] args)
   }
 
   auto hostname = args[1];
-  auto port = args[2].to!int;
+  auto port = args[2].to!ushort;
   exchange = "amq.direct"; /* argv[3]; */
-  bindingkey = "test queue"; /* argv[4]; */
+  bindingKey = "test queue"; /* argv[4]; */
 
   conn = amqp_new_connection();
 
@@ -131,19 +131,19 @@ int main(string[] args)
     die("creating TCP socket");
   }
 
-  status = amqp_socket_open(socket, hostname, port);
+  status = amqp_socket_open(socket, hostname.toStringz, port);
   if (status) {
     die("opening TCP socket");
   }
 
-  die_on_amqp_error(amqp_login(conn, "/", 0, 131072, 0, AMQP_SASL_METHOD_PLAIN, "guest", "guest"),
-                    "Logging in");
+  die_on_amqp_error(amqp_login(conn, "/".toStringz, 0, 131072, 0, SaslMethod.plain, "guest".toStringz, "guest".toStringz),
+                    "Logging in".toStringz);
   amqp_channel_open(conn, 1);
   die_on_amqp_error(amqp_get_rpc_reply(conn), "Opening channel");
 
   {
-    amqp_queue_declare_ok_t *r = amqp_queue_declare(conn, 1, amqp_empty_bytes, 0, 0, 0, 1,
-                                 amqp_empty_table);
+    amqp_queue_declare_ok_t *r = amqp_queue_declare(conn, 1.to!ushort, cast(amqp_bytes_t)amqp_empty_bytes, 0, 0, 0, 1,
+                                 cast(amqp_table_t) amqp_empty_table);
     die_on_amqp_error(amqp_get_rpc_reply(conn), "Declaring queue");
     queuename = amqp_bytes_malloc_dup(r.queue);
     if (queuename.bytes is null) {
@@ -152,16 +152,16 @@ int main(string[] args)
     }
   }
 
-  amqp_queue_bind(conn, 1, queuename, amqp_cstring_bytes(exchange), amqp_cstring_bytes(bindingkey),
-                  amqp_empty_table);
+  amqp_queue_bind(conn, 1.to!ushort, queuename, amqp_cstring_bytes(exchange.toStringz), amqp_cstring_bytes(bindingKey.toStringz),
+                  cast(amqp_table_t) amqp_empty_table);
   die_on_amqp_error(amqp_get_rpc_reply(conn), "Binding queue");
 
-  amqp_basic_consume(conn, 1, queuename, amqp_empty_bytes, 0, 1, 0, amqp_empty_table);
+  amqp_basic_consume(conn, 1.to!ushort, queuename,cast(amqp_bytes_t) amqp_empty_bytes, 0, 1, 0, cast(amqp_table_t)amqp_empty_table);
   die_on_amqp_error(amqp_get_rpc_reply(conn), "Consuming");
 
   run(conn);
 
-  die_on_amqp_error(amqp_channel_close(conn, 1, AMQP_REPLY_SUCCESS), "Closing channel");
+  die_on_amqp_error(amqp_channel_close(conn, 1.to!ushort, AMQP_REPLY_SUCCESS), "Closing channel");
   die_on_amqp_error(amqp_connection_close(conn, AMQP_REPLY_SUCCESS), "Closing connection");
   die_on_error(amqp_destroy_connection(conn), "Ending connection");
 
