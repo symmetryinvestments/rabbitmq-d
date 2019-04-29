@@ -1,8 +1,8 @@
-module kaleidic.api.rabbitmq.examples.bind;
+module amqp_consumer;
 import std.stdio;
 import std.string;
 
-import kaleidic.api.rabbitmq.rabbitmq;
+import kaleidic.api.rabbitmq;
 import utils;
 
 
@@ -10,15 +10,15 @@ enum SUMMARY_EVERY_US = 1000000;
 
 void run(amqp_connection_state_t conn)
 {
-  uint64_t start_time = now_microseconds();
+  ulong start_time = now_microseconds();
   int received = 0;
   int previous_received = 0;
-  uint64_t previous_report_time = start_time;
-  uint64_t next_summary_time = start_time + SUMMARY_EVERY_US;
+  ulong previous_report_time = start_time;
+  ulong next_summary_time = start_time + SUMMARY_EVERY_US;
 
   amqp_frame_t frame;
 
-  uint64_t now;
+  ulong now;
 
   while(true)
   {
@@ -30,7 +30,7 @@ void run(amqp_connection_state_t conn)
       int countOverInterval = received - previous_received;
       double intervalRate = countOverInterval / ((now - previous_report_time) / 1000000.0);
       printf("%d ms: Received %d - %d since last report (%d Hz)\n",
-             (int)(now - start_time) / 1000, received, countOverInterval, (int) intervalRate);
+             cast(int)(now - start_time) / 1000, received, countOverInterval, cast(int) intervalRate);
 
       previous_received = received;
       previous_report_time = now;
@@ -38,7 +38,7 @@ void run(amqp_connection_state_t conn)
     }
 
     amqp_maybe_release_buffers(conn);
-    ret = amqp_consume_message(conn, &envelope, NULL, 0);
+    ret = amqp_consume_message(conn, &envelope, null, 0);
 
     if (AMQP_RESPONSE_NORMAL != ret.reply_type) {
       if (AMQP_RESPONSE_LIBRARY_EXCEPTION == ret.reply_type &&
@@ -106,16 +106,15 @@ void run(amqp_connection_state_t conn)
 
 int main(string[] args)
 {
-  char const *hostname;
+  string hostname;
   int port, status;
-  char const *exchange;
-  char const *bindingkey;
-  amqp_socket_t *socket = NULL;
+  string exchange, bindingKey;
+  amqp_socket_t *socket = null;
   amqp_connection_state_t conn;
 
   amqp_bytes_t queuename;
 
-  if (argc < 3) {
+  if (args.length< 3) {
     fprintf(stderr, "Usage: amqp_consumer host port\n");
     return 1;
   }
@@ -146,8 +145,8 @@ int main(string[] args)
     amqp_queue_declare_ok_t *r = amqp_queue_declare(conn, 1, amqp_empty_bytes, 0, 0, 0, 1,
                                  amqp_empty_table);
     die_on_amqp_error(amqp_get_rpc_reply(conn), "Declaring queue");
-    queuename = amqp_bytes_malloc_dup(r->queue);
-    if (queuename.bytes == NULL) {
+    queuename = amqp_bytes_malloc_dup(r.queue);
+    if (queuename.bytes is null) {
       fprintf(stderr, "Out of memory while copying queue name");
       return 1;
     }

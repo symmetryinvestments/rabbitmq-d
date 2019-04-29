@@ -1066,7 +1066,7 @@ pragma(inline,true)
 amqp_rpc_reply_t amqp_rpc_reply_error(amqp_status_enum status)
 {
   amqp_rpc_reply_t reply;
-  reply.reply_type = amqp_response_type_enum.AMQP_RESPONSE_LIBRARY_EXCEPTION;
+  reply.reply_type = ResponseType.libraryException;
   reply.library_error = status;
   return reply;
 }
