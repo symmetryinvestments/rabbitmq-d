@@ -1,0 +1,7 @@
+name "amqp_bind"
+description "A minimal D application."
+authors "laeeth"
+copyright "Copyright © 2019, laeeth"
+license "proprietary"
+dependency "rabbitmq" version="*"
+targetType "executable"

@@ -1,18 +1,22 @@
+module kaleidic.api.rabbitmq;
 import deimos.openssl.x509v3;
 import deimos.openssl.bio;
 import core.stdc.string:memcpy;
 alias ssize_t= long; // FIXME
 struct amqp_time_t {}
 struct pthread_mutex_t {}
-struct timeval {}
+
 alias DWORD=int;
 
-version(Linux)
+version(Posix)
 {
-  import pthread;
+	// import pthread;
+	public import core.sys.posix.sys.time: timeval;
 }
+
 else version(Windows)
 {
+	public import core.sys.windows.winsock2: timeval;
 }
 
 /+
@@ -292,7 +296,7 @@ typedef _W64 int ssize_t;
 /** \endcond */
 +/
 
-
+extern(C):
 
 
 enum AMQP_VERSION_MAJOR=0;
@@ -462,13 +466,24 @@ struct amqp_frame_t
   Payload payload;              /**< the payload of the frame */
 }
 
-enum amqp_response_type_enum
+enum
 {
   AMQP_RESPONSE_NONE = 0,         /**< the library got an EOF from the socket */
   AMQP_RESPONSE_NORMAL,           /**< response normal, the RPC completed successfully */
   AMQP_RESPONSE_LIBRARY_EXCEPTION,/**< library error, an error occurred in the library, examine the library_error */
   AMQP_RESPONSE_SERVER_EXCEPTION  /**< server exception, the broker returned an error, check replay */
 }
+
+enum ResponseType
+{
+	none = AMQP_RESPONSE_NONE,
+	normal = AMQP_RESPONSE_NORMAL,
+	libraryException = AMQP_RESPONSE_LIBRARY_EXCEPTION,
+	serverException = AMQP_RESPONSE_SERVER_EXCEPTION,
+}
+
+alias amqp_response_type_enum = ResponseType;
+
 
 struct amqp_rpc_reply_t
 {
@@ -486,7 +501,15 @@ struct amqp_rpc_reply_t
                                          *     string can be retrieved using amqp_error_string */
 }
 
-enum amqp_sasl_method_enum
+enum SaslMethod
+{
+	undefined = AMQP_SASL_METHOD_UNDEFINED,
+	plain = AMQP_SASL_METHOD_PLAIN,
+	external = AMQP_SASL_METHOD_EXTERNAL,
+}
+alias amqp_sasl_method_enum = SaslMethod;
+
+enum
 {
   AMQP_SASL_METHOD_UNDEFINED = -1, /**< Invalid SASL method */
   AMQP_SASL_METHOD_PLAIN = 0,      /**< the PLAIN SASL method for authentication to the broker */
@@ -494,8 +517,9 @@ enum amqp_sasl_method_enum
 }
 
 alias amqp_connection_state_t = amqp_connection_state_t_ *;
+alias amqp_status_enum = int;
 
-enum amqp_status_enum
+enum
 {
   AMQP_STATUS_OK =                         0x0,     /**< Operation successful */
   AMQP_STATUS_NO_MEMORY =                 -0x0001,  /**< Memory allocation
@@ -678,15 +702,14 @@ timeval* amqp_get_handshake_timeout(amqp_connection_state_t state);
 int amqp_set_handshake_timeout(amqp_connection_state_t state, timeval* timeout);
 timeval* amqp_get_rpc_timeout(amqp_connection_state_t state);
 int amqp_set_rpc_timeout(amqp_connection_state_t state, timeval* timeout);
+
 amqp_socket_t * amqp_tcp_socket_new(amqp_connection_state_t state);
-void amqp_tcp_socket_set_sockfd(amqp_socket_t *self, int sockfd);
 void amqp_tcp_socket_set_sockfd(amqp_socket_t *self, int sockfd);
 amqp_table_entry_t amqp_table_construct_utf8_entry(const(char)*key, const(char)*value);
 amqp_table_entry_t amqp_table_construct_table_entry(const(char)*key, const amqp_table_t *value);
 amqp_table_entry_t amqp_table_construct_bool_entry(const(char)*key, const int value);
 amqp_table_entry_t *amqp_table_get_entry_by_key(const amqp_table_t *table, const amqp_bytes_t key);
-amqp_socket_t * amqp_tcp_socket_new(amqp_connection_state_t state);
-void amqp_tcp_socket_set_sockfd(amqp_socket_t *self, int sockfd);
+
 amqp_socket_t * amqp_ssl_socket_new(amqp_connection_state_t state);
 int amqp_ssl_socket_set_cacert(amqp_socket_t *self, const(char)*cacert);
 int amqp_ssl_socket_set_key(amqp_socket_t *self, const(char)*cert, const(char)*key);
@@ -1047,7 +1070,7 @@ pragma(inline,true)
 amqp_rpc_reply_t amqp_rpc_reply_error(amqp_status_enum status)
 {
   amqp_rpc_reply_t reply;
-  reply.reply_type = amqp_response_type_enum.AMQP_RESPONSE_LIBRARY_EXCEPTION;
+  reply.reply_type = ResponseType.libraryException;
   reply.library_error = status;
   return reply;
 }
@@ -1104,6 +1127,8 @@ enum AMQP_RESOURCE_ERROR=506;
 enum AMQP_NOT_ALLOWED=530;
 enum AMQP_NOT_IMPLEMENTED=540;
 enum AMQP_INTERNAL_ERROR=541;
+
+alias ReplySuccess = AMQP_REPLY_SUCCESS;
 
 const(char)*  amqp_constant_name(int constantNumber);
 amqp_boolean_t amqp_constant_is_hard_error(int constantNumber);
@@ -1687,7 +1712,7 @@ struct amqp_confirm_properties_t
 
 amqp_channel_open_ok_t * amqp_channel_open(amqp_connection_state_t state, amqp_channel_t channel);
 amqp_channel_flow_ok_t * amqp_channel_flow(amqp_connection_state_t state, amqp_channel_t channel, amqp_boolean_t active);
-amqp_exchange_declare_ok_t * amqp_exchange_declare(amqp_connection_state_t state, amqp_channel_t channel, amqp_bytes_t exchange, amqp_bytes_t type, amqp_boolean_t passive, amqp_boolean_t durable, amqp_boolean_t auto_delete, amqp_boolean_t internal, amqp_table_t arguments);
+amqp_exchange_declare_ok_t* amqp_exchange_declare(amqp_connection_state_t state, amqp_channel_t channel, amqp_bytes_t exchange, amqp_bytes_t type, amqp_boolean_t passive, amqp_boolean_t durable, amqp_boolean_t auto_delete, amqp_boolean_t internal, amqp_table_t arguments);
 amqp_exchange_delete_ok_t * amqp_exchange_delete(amqp_connection_state_t state, amqp_channel_t channel, amqp_bytes_t exchange, amqp_boolean_t if_unused);
 amqp_exchange_bind_ok_t * amqp_exchange_bind(amqp_connection_state_t state, amqp_channel_t channel, amqp_bytes_t destination, amqp_bytes_t source, amqp_bytes_t routing_key, amqp_table_t arguments);
 amqp_exchange_unbind_ok_t * amqp_exchange_unbind(amqp_connection_state_t state, amqp_channel_t channel, amqp_bytes_t destination, amqp_bytes_t source, amqp_bytes_t routing_key, amqp_table_t arguments);
@@ -1711,3 +1736,10 @@ DWORD pthread_self();
 int pthread_mutex_init(pthread_mutex_t *, void *attr);
 int pthread_mutex_lock(pthread_mutex_t *);
 int pthread_mutex_unlock(pthread_mutex_t *);
+
+
+amqp_bytes_t amqp_string(string s)
+{
+	import std.string: toStringz;
+	return s.toStringz.amqp_cstring_bytes;
+}

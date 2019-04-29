@@ -1,0 +1,7 @@
+name "amqp_producer"
+description "AMQP producer"
+authors "laeeth"
+copyright "Copyright © 2019, laeeth"
+license "proprietary"
+dependency "rabbitmq" version="*"
+targetType "executable"
