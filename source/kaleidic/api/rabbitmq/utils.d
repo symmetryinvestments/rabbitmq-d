@@ -1,5 +1,6 @@
 module kaleidic.api.rabbitmq.utils;
 import kaleidic.api.rabbitmq;
+public import kaleidic.api.rabbitmq.platform_utils;
 import std.stdio:writeln,writef;
 import std.ascii;
 import core.stdc.stdarg;
