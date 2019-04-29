@@ -5,7 +5,7 @@ import std.conv:to;
 import std.exception;
 
 import kaleidic.api.rabbitmq;
-import utils;
+import kaleidic.api.rabbitmq.utils;
 
 
 int main(string[] args)
@@ -26,15 +26,15 @@ int main(string[] args)
   enforce(socket !is null, "error creating TCP socket");
   auto status = amqp_socket_open(socket, hostname.toStringz, port);
   enforce(status,"error opening TCP socket");
-  die_on_amqp_error(amqp_login(conn, "/", 0, 131072, 0, SaslMethod.plain, "guest".toStringz, "guest".toStringz), "Logging in".toStringz);
+  die_on_amqp_error(amqp_login(conn, "/", 0, 131072, 0, SaslMethod.plain, "guest".toStringz, "guest".toStringz), "Logging in");
   amqp_channel_open(conn, 1);
-  die_on_amqp_error(amqp_get_rpc_reply(conn), "Opening channel".toStringz);
+  die_on_amqp_error(amqp_get_rpc_reply(conn), "Opening channel");
 
   amqp_queue_bind(conn, 1.to!ushort,
                   amqp_cstring_bytes(queue.toStringz),
                   amqp_cstring_bytes(exchange.toStringz),
                   amqp_cstring_bytes(bindingKey.toStringz),
-                  cast(amqp_empty_table)amqp_empty_table);
+                  cast(amqp_table_t)amqp_empty_table);
   die_on_amqp_error(amqp_get_rpc_reply(conn), "Unbinding");
 
   die_on_amqp_error(amqp_channel_close(conn, 1, AMQP_REPLY_SUCCESS), "Closing channel");
