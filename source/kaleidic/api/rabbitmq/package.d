@@ -5,15 +5,18 @@ import core.stdc.string:memcpy;
 alias ssize_t= long; // FIXME
 struct amqp_time_t {}
 struct pthread_mutex_t {}
-struct timeval {}
+
 alias DWORD=int;
 
-version(Linux)
+version(Posix)
 {
-  import pthread;
+	// import pthread;
+	public import core.sys.posix.sys.time: timeval;
 }
+
 else version(Windows)
 {
+	public import core.sys.windows.winsock2: timeval;
 }
 
 /+
