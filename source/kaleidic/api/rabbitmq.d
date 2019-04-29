@@ -1,3 +1,4 @@
+module kaleidic.api.rabbitmq;
 import deimos.openssl.x509v3;
 import deimos.openssl.bio;
 import core.stdc.string:memcpy;
@@ -462,13 +463,24 @@ struct amqp_frame_t
   Payload payload;              /**< the payload of the frame */
 }
 
-enum amqp_response_type_enum
+enum
 {
   AMQP_RESPONSE_NONE = 0,         /**< the library got an EOF from the socket */
   AMQP_RESPONSE_NORMAL,           /**< response normal, the RPC completed successfully */
   AMQP_RESPONSE_LIBRARY_EXCEPTION,/**< library error, an error occurred in the library, examine the library_error */
   AMQP_RESPONSE_SERVER_EXCEPTION  /**< server exception, the broker returned an error, check replay */
 }
+
+enum ResponseType
+{
+	none = AMQP_RESPONSE_NONE,
+	normal = AMQP_RESPONSE_NORMAL,
+	libraryException = AMQP_RESPONSE_LIBRARY_EXCEPTION,
+	serverException = AMQP_RESPONSE_SERVER_EXCEPTION,
+}
+
+alias amqp_response_type_enum = ResponseType;
+
 
 struct amqp_rpc_reply_t
 {
@@ -486,7 +498,15 @@ struct amqp_rpc_reply_t
                                          *     string can be retrieved using amqp_error_string */
 }
 
-enum amqp_sasl_method_enum
+enum SaslMethod
+{
+	undefined = AMQP_SASL_METHOD_UNDEFINED,
+	plain = AMQP_SASL_METHOD_PLAIN,
+	external = AMQP_SASL_METHOD_EXTERNAL,
+}
+alias amqp_sasl_method_enum = SaslMethod;
+
+enum
 {
   AMQP_SASL_METHOD_UNDEFINED = -1, /**< Invalid SASL method */
   AMQP_SASL_METHOD_PLAIN = 0,      /**< the PLAIN SASL method for authentication to the broker */
@@ -678,15 +698,14 @@ timeval* amqp_get_handshake_timeout(amqp_connection_state_t state);
 int amqp_set_handshake_timeout(amqp_connection_state_t state, timeval* timeout);
 timeval* amqp_get_rpc_timeout(amqp_connection_state_t state);
 int amqp_set_rpc_timeout(amqp_connection_state_t state, timeval* timeout);
+
 amqp_socket_t * amqp_tcp_socket_new(amqp_connection_state_t state);
-void amqp_tcp_socket_set_sockfd(amqp_socket_t *self, int sockfd);
 void amqp_tcp_socket_set_sockfd(amqp_socket_t *self, int sockfd);
 amqp_table_entry_t amqp_table_construct_utf8_entry(const(char)*key, const(char)*value);
 amqp_table_entry_t amqp_table_construct_table_entry(const(char)*key, const amqp_table_t *value);
 amqp_table_entry_t amqp_table_construct_bool_entry(const(char)*key, const int value);
 amqp_table_entry_t *amqp_table_get_entry_by_key(const amqp_table_t *table, const amqp_bytes_t key);
-amqp_socket_t * amqp_tcp_socket_new(amqp_connection_state_t state);
-void amqp_tcp_socket_set_sockfd(amqp_socket_t *self, int sockfd);
+
 amqp_socket_t * amqp_ssl_socket_new(amqp_connection_state_t state);
 int amqp_ssl_socket_set_cacert(amqp_socket_t *self, const(char)*cacert);
 int amqp_ssl_socket_set_key(amqp_socket_t *self, const(char)*cert, const(char)*key);
