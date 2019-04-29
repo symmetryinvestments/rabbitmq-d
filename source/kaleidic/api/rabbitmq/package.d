@@ -293,7 +293,7 @@ typedef _W64 int ssize_t;
 /** \endcond */
 +/
 
-
+extern(C):
 
 
 enum AMQP_VERSION_MAJOR=0;
@@ -514,8 +514,9 @@ enum
 }
 
 alias amqp_connection_state_t = amqp_connection_state_t_ *;
+alias amqp_status_enum = int;
 
-enum amqp_status_enum
+enum
 {
   AMQP_STATUS_OK =                         0x0,     /**< Operation successful */
   AMQP_STATUS_NO_MEMORY =                 -0x0001,  /**< Memory allocation
@@ -1124,6 +1125,8 @@ enum AMQP_NOT_ALLOWED=530;
 enum AMQP_NOT_IMPLEMENTED=540;
 enum AMQP_INTERNAL_ERROR=541;
 
+alias ReplySuccess = AMQP_REPLY_SUCCESS;
+
 const(char)*  amqp_constant_name(int constantNumber);
 amqp_boolean_t amqp_constant_is_hard_error(int constantNumber);
 const(char)*  amqp_method_name(amqp_method_number_t methodNumber);
@@ -1730,3 +1733,10 @@ DWORD pthread_self();
 int pthread_mutex_init(pthread_mutex_t *, void *attr);
 int pthread_mutex_lock(pthread_mutex_t *);
 int pthread_mutex_unlock(pthread_mutex_t *);
+
+
+amqp_bytes_t amqp_string(string s)
+{
+	import std.string: toStringz;
+	return s.toStringz.amqp_cstring_bytes;
+}

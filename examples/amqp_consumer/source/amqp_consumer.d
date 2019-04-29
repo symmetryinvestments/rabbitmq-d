@@ -4,7 +4,7 @@ import std.string;
 import std.conv:to;
 
 import kaleidic.api.rabbitmq;
-import utils;
+import kaleidic.api.rabbitmq.utils;
 
 
 enum SUMMARY_EVERY_US = 1000000;
@@ -115,7 +115,7 @@ int main(string[] args)
   amqp_bytes_t queuename;
 
   if (args.length< 3) {
-    fprintf(stderr, "Usage: amqp_consumer host port\n");
+    stderr.writeln("Usage: amqp_consumer host port\n");
     return 1;
   }
 
@@ -147,7 +147,7 @@ int main(string[] args)
     die_on_amqp_error(amqp_get_rpc_reply(conn), "Declaring queue");
     queuename = amqp_bytes_malloc_dup(r.queue);
     if (queuename.bytes is null) {
-      fprintf(stderr, "Out of memory while copying queue name");
+      stderr.writeln("Out of memory while copying queue name");
       return 1;
     }
   }
