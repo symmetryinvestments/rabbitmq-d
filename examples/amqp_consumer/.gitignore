@@ -1,0 +1,15 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/amqp_consumer
+amqp_consumer.so
+amqp_consumer.dylib
+amqp_consumer.dll
+amqp_consumer.a
+amqp_consumer.lib
+amqp_consumer-test-*
+*.exe
+*.o
+*.obj
+*.lst
