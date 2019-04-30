@@ -9,13 +9,6 @@ import std.exception;
 import std.format:format;
 
 void die(const char *fmt, ...);
-extern(C)
-{
-  ulong now_microseconds();
-  void microsleep(int usec);
-}
-
-
 void die(const char *fmt, ...)
 {
 	import core.stdc.stdio:stderr;

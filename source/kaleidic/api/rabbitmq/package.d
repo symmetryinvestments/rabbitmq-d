@@ -596,9 +596,13 @@ enum amqp_delivery_mode_enum
 	AMQP_DELIVERY_NONPERSISTENT = 1, /**< Non-persistent message */
 	AMQP_DELIVERY_PERSISTENT = 2 /**< Persistent message */
 } 
-const amqp_bytes_t amqp_empty_bytes;
-const amqp_table_t amqp_empty_table;
-const amqp_array_t amqp_empty_array;
+
+// const causes problems with prototypes of functions
+// const
+amqp_bytes_t amqp_empty_bytes;
+amqp_table_t amqp_empty_table;
+amqp_array_t amqp_empty_array;
+
 alias AMQP_EMPTY_BYTES= amqp_empty_bytes;
 alias AMQP_EMPTY_TABLE= amqp_empty_table;
 alias AMQP_EMPTY_ARRAY = amqp_empty_array;
@@ -1743,3 +1747,13 @@ amqp_bytes_t amqp_string(string s)
 	import std.string: toStringz;
 	return s.toStringz.amqp_cstring_bytes;
 }
+
+amqp_bytes_t asRabbit(ubyte[] buf)
+{
+	amqp_bytes_t ret;
+	ret.len = buf.length;
+	ret.bytes = cast(void*) buf.ptr;
+	return ret;
+}
+
+
