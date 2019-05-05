@@ -599,9 +599,9 @@ enum amqp_delivery_mode_enum
 
 // const causes problems with prototypes of functions
 // const
-amqp_bytes_t amqp_empty_bytes;
-amqp_table_t amqp_empty_table;
-amqp_array_t amqp_empty_array;
+__gshared amqp_bytes_t amqp_empty_bytes;
+__gshared amqp_table_t amqp_empty_table;
+__gshared amqp_array_t amqp_empty_array;
 
 alias AMQP_EMPTY_BYTES= amqp_empty_bytes;
 alias AMQP_EMPTY_TABLE= amqp_empty_table;
