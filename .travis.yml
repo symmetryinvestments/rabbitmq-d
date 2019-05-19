@@ -21,12 +21,13 @@ addons:
 
 
 install:
+  - mkdir bin
   - gem install bundler -v 1.17.3
   - bundle install
 
 
 script:
-  - ./ci.sh
+  - dub test --compiler=${DC}
 
 
 after_success:
