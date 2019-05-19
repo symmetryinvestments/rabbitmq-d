@@ -22,8 +22,6 @@ addons:
 
 install:
   - mkdir bin
-  - gem install bundler -v 1.17.3
-  - bundle install
 
 
 script:
