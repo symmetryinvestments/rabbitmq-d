@@ -1,0 +1,32 @@
+language: d
+sudo: false
+dist: xenial
+
+matrix:
+  include:
+    - d: dmd-nightly
+    - d: dmd-2.086.0
+    - d: dmd-2.085.0
+  allow_failures:
+    - d: dmd-nightly
+
+
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - libclang-6.0-dev
+      - g++-7
+
+
+install:
+  - mkdir bin
+
+
+script:
+  - dub test --compiler=${DC}
+
+
+after_success:
+ - bash <(curl -s https://codecov.io/bash)
