@@ -7,8 +7,7 @@ import core.stdc.stdarg;
 import core.stdc.stdio:stderr,printf,vfprintf;
 import std.exception;
 import std.format:format;
-
-void die(const char *fmt, ...);
+/+
 void die(const char *fmt, ...)
 {
 	import core.stdc.stdio:stderr;
@@ -63,7 +62,7 @@ void die_on_amqp_error(amqp_rpc_reply_t x, string context)
 
 	throw new Exception(format!"unknown Response Type: %s"(x.reply_type));
 }
-
++/
 void dump_row(long count, int numinrow, int *chs)
 {
   int i;
