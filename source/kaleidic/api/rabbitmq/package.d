@@ -7,7 +7,8 @@ version(OpenSSL)
 import core.stdc.string:memcpy;
 alias ssize_t= long; // FIXME
 struct amqp_time_t {}
-struct pthread_mutex_t {}
+version(Posix) import core.sys.posix.sys.types:pthread_mutex_t;
+else struct pthread_mutex_t {}
 
 alias DWORD=int;
 
