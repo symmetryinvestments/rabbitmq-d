@@ -487,7 +487,7 @@ struct RabbitClient
 		import std.exception : enforce;
 		enforce(conn !is null, "trying to send a message to a null connection");
 		enforce(socket !is null, "sending a message to a null socket");
-		correlationID correlationID = sendMessage((cast(char[])message).idup,routingKey, contentType);
+		CorrelationID correlationID = sendMessage((cast(char[])message).idup,routingKey, contentType);
 		static if (waitForResponse)
 			return getResponseBlocking(correlationID,timeout);
 		else
