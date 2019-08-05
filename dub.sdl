@@ -3,7 +3,14 @@ description "Binding for librabbitmq-c"
 authors "Laeeth Isharc"
 copyright "Copyright © 2017,2018,2019, Laeeth Isharc and Kaleidic Associates"
 license "Boost"
-dependency "openssl" version="*"
 sourcePath "source"
-//sourceFiles "c/platform_utils.o"
 libs "rabbitmq"
+targetType "library"
+
+configuration "openssl" {
+  versions "OpenSSL"
+  dependency "openssl" version="*"
+}
+
+configuration "no-openssl" {
+}

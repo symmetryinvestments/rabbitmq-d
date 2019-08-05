@@ -1,10 +1,14 @@
 module kaleidic.api.rabbitmq;
-import deimos.openssl.x509v3;
-import deimos.openssl.bio;
+version(OpenSSL)
+{
+	import deimos.openssl.x509v3;
+	import deimos.openssl.bio;
+}
 import core.stdc.string:memcpy;
 alias ssize_t= long; // FIXME
 struct amqp_time_t {}
-struct pthread_mutex_t {}
+version(Posix) import core.sys.posix.sys.types:pthread_mutex_t;
+else struct pthread_mutex_t {}
 
 alias DWORD=int;
 
@@ -714,25 +718,27 @@ amqp_table_entry_t amqp_table_construct_table_entry(const(char)*key, const amqp_
 amqp_table_entry_t amqp_table_construct_bool_entry(const(char)*key, const int value);
 amqp_table_entry_t *amqp_table_get_entry_by_key(const amqp_table_t *table, const amqp_bytes_t key);
 
-amqp_socket_t * amqp_ssl_socket_new(amqp_connection_state_t state);
-int amqp_ssl_socket_set_cacert(amqp_socket_t *self, const(char)*cacert);
-int amqp_ssl_socket_set_key(amqp_socket_t *self, const(char)*cert, const(char)*key);
-int amqp_ssl_socket_set_key_buffer(amqp_socket_t *self, const(char)*cert, const void *key, size_t n);
-void amqp_ssl_socket_set_verify(amqp_socket_t *self, amqp_boolean_t verify);
-void amqp_ssl_socket_set_verify_peer(amqp_socket_t *self, amqp_boolean_t verify);
-void amqp_ssl_socket_set_verify_hostname(amqp_socket_t *self, amqp_boolean_t verify);
-
-enum  amqp_tls_version_t
+version(OpenSSL)
 {
-  AMQP_TLSv1 = 1,
-  AMQP_TLSv1_1 = 2,
-  AMQP_TLSv1_2 = 3,
-  AMQP_TLSvLATEST = 0xFFFF
+	amqp_socket_t * amqp_ssl_socket_new(amqp_connection_state_t state);
+	int amqp_ssl_socket_set_cacert(amqp_socket_t *self, const(char)*cacert);
+	int amqp_ssl_socket_set_key(amqp_socket_t *self, const(char)*cert, const(char)*key);
+	int amqp_ssl_socket_set_key_buffer(amqp_socket_t *self, const(char)*cert, const void *key, size_t n);
+	void amqp_ssl_socket_set_verify(amqp_socket_t *self, amqp_boolean_t verify);
+	void amqp_ssl_socket_set_verify_peer(amqp_socket_t *self, amqp_boolean_t verify);
+	void amqp_ssl_socket_set_verify_hostname(amqp_socket_t *self, amqp_boolean_t verify);
+
+	enum  amqp_tls_version_t
+	{
+	  AMQP_TLSv1 = 1,
+	  AMQP_TLSv1_1 = 2,
+	  AMQP_TLSv1_2 = 3,
+	  AMQP_TLSvLATEST = 0xFFFF
+	}
+
+	int amqp_ssl_socket_set_ssl_versions(amqp_socket_t *self, amqp_tls_version_t min, amqp_tls_version_t max);
+	void amqp_set_initialize_ssl_library(amqp_boolean_t do_initialize);
 }
-
-int amqp_ssl_socket_set_ssl_versions(amqp_socket_t *self, amqp_tls_version_t min, amqp_tls_version_t max);
-void amqp_set_initialize_ssl_library(amqp_boolean_t do_initialize);
-
 
 
 enum amqp_socket_flag_enum
@@ -1091,9 +1097,11 @@ enum amqp_hostname_validation_result
   AMQP_HVR_MALFORMED_CERTIFICATE,
   AMQP_HVR_ERROR
 }
-
-amqp_hostname_validation_result amqp_ssl_validate_hostname(const(char)*hostname, const X509* server_cert);
-BIO_METHOD* amqp_openssl_bio();
+version(OpenSSL)
+{
+	amqp_hostname_validation_result amqp_ssl_validate_hostname(const(char)*hostname, const X509* server_cert);
+	BIO_METHOD* amqp_openssl_bio();
+}
 enum amqp_hostcheck_result
 {
   AMQP_HCR_NO_MATCH = 0,
