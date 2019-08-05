@@ -1,11 +1,10 @@
-module rpc_client_sendstring;
+module rabbitmq.examples.rpc_client_sendstring;
 import std.stdio;
 import std.string;
 import std.getopt;
 import std.exception;
 
-import kaleidic.api.rabbitmq;
-import kaleidic.api.rabbitmq.utils;
+import symmetry.api.rabbitmq;
 
 struct Options
 {

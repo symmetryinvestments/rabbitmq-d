@@ -1,4 +1,4 @@
-module kaleidic.api.rabbitmq.platform_utils;
+module symmetry.api.rabbitmq.platform_utils;
 import std.conv:to;
 // import kaleidic.api.rabbitmq;
 

@@ -1,12 +1,11 @@
-module unbind;
+module rabbitmq.examples.unbind;
 import std.stdio;
 import std.string;
 import std.getopt;
 import std.exception;
 import std.conv:to;
 
-import kaleidic.api.rabbitmq;
-import kaleidic.api.rabbitmq.utils;
+import symmetry.api.rabbitmq;
 
 struct Options
 {

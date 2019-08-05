@@ -1,12 +1,10 @@
-module listen;
-import std.stdio;
+module rabbitmq.examples.listen;
 import std.string;
 import std.exception;
 import std.conv:to;
 import std.getopt;
 
-import kaleidic.api.rabbitmq;
-import kaleidic.api.rabbitmq.utils;
+import symmetry.api.rabbitmq;
 
 struct Options
 {
@@ -24,6 +22,7 @@ struct Options
 
 int main(string[] args)
 {
+	import std.stdio;
 	Options options;
 	int status;
 	amqp_socket_t *socket;

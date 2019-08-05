@@ -1,9 +1,8 @@
-module amqp_producer;
+module rabbitmq.examples.producer;
 import std.stdio;
 import std.string;
 import std.exception;
-import kaleidic.api.rabbitmq;
-import kaleidic.api.rabbitmq.utils;
+import symmetry.api.rabbitmq;
 import std.conv:to;
 
 enum SUMMARY_EVERY_US = 1000000;

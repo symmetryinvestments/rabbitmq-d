@@ -1,16 +1,25 @@
-module kaleidic.api.rabbitmq;
+/+
+  low-level C bindings for rabbitmq-c
+  written by Laeeth Isharc at Symmetry Investments 2017 - 2019
++/
+
+///
+module symmetry.api.rabbitmq.bindings;
+
+import core.stdc.string:memcpy;
+
 version(OpenSSL)
 {
 	import deimos.openssl.x509v3;
 	import deimos.openssl.bio;
 }
-import core.stdc.string:memcpy;
-alias ssize_t= long; // FIXME
+
+alias ssize_t = ptrdiff_t;
 struct amqp_time_t {}
 version(Posix) import core.sys.posix.sys.types:pthread_mutex_t;
 else struct pthread_mutex_t {}
 
-alias DWORD=int;
+alias DWORD = int;
 
 version(Posix)
 {
@@ -23,290 +32,14 @@ else version(Windows)
 	public import core.sys.windows.winsock2: timeval;
 }
 
-/+
-import limits;
+
+extern(C) nothrow @nogc @system:
 
 
-
-// 7.18.1.2 Minimum-width integer types
-typedef char    int_least8_t;
-typedef short   int_least16_t;
-typedef int   int_least32_t;
-typedef long   int_least64_t;
-typedef ubyte   uint_least8_t;
-typedef ushort  uint_least16_t;
-typedef uint  uint_least32_t;
-typedef ulong  uint_least64_t;
-
-// 7.18.1.3 Fastest minimum-width integer types
-typedef char    int_fast8_t;
-typedef short   int_fast16_t;
-typedef int   int_fast32_t;
-typedef long   int_fast64_t;
-typedef ubyte   uint_fast8_t;
-typedef ushort  uint_fast16_t;
-typedef uint  uint_fast32_t;
-typedef ulong  uint_fast64_t;
-
-// 7.18.1.4 Integer types capable of holding object pointers
-#ifdef _WIN64 // [
-   typedef signed __int64    intptr_t;
-   typedef unsigned __int64  uintptr_t;
-#else // _WIN64 ][
-   typedef _W64 signed int   intptr_t;
-   typedef _W64 unsigned int uintptr_t;
-#endif // _WIN64 ]
-
-// 7.18.1.5 Greatest-width integer types
-typedef long   intmax_t;
-typedef ulong  uintmax_t;
-
-
-// 7.18.2 Limits of specified-width integer types
-
-#if !defined(__cplusplus) || defined(__STDC_LIMIT_MACROS) // [   See footnote 220 at page 257 and footnote 221 at page 259
-
-// 7.18.2.1 Limits of exact-width integer types
-enum INT8_MIN     ((char)_I8_MIN)
-enum INT8_MAX     _I8_MAX
-enum INT16_MIN    ((short)_I16_MIN)
-enum INT16_MAX    _I16_MAX
-enum INT32_MIN    ((int)_I32_MIN)
-enum INT32_MAX    _I32_MAX
-enum INT64_MIN    ((long)_I64_MIN)
-enum INT64_MAX    _I64_MAX
-enum UINT8_MAX    _UI8_MAX
-enum UINT16_MAX   _UI16_MAX
-enum UINT32_MAX   _UI32_MAX
-enum UINT64_MAX   _UI64_MAX
-
-// 7.18.2.2 Limits of minimum-width integer types
-enum INT_LEAST8_MIN    INT8_MIN
-enum INT_LEAST8_MAX    INT8_MAX
-enum INT_LEAST16_MIN   INT16_MIN
-enum INT_LEAST16_MAX   INT16_MAX
-enum INT_LEAST32_MIN   INT32_MIN
-enum INT_LEAST32_MAX   INT32_MAX
-enum INT_LEAST64_MIN   INT64_MIN
-enum INT_LEAST64_MAX   INT64_MAX
-enum UINT_LEAST8_MAX   UINT8_MAX
-enum UINT_LEAST16_MAX  UINT16_MAX
-enum UINT_LEAST32_MAX  UINT32_MAX
-enum UINT_LEAST64_MAX  UINT64_MAX
-
-// 7.18.2.3 Limits of fastest minimum-width integer types
-enum INT_FAST8_MIN    INT8_MIN
-enum INT_FAST8_MAX    INT8_MAX
-enum INT_FAST16_MIN   INT16_MIN
-enum INT_FAST16_MAX   INT16_MAX
-enum INT_FAST32_MIN   INT32_MIN
-enum INT_FAST32_MAX   INT32_MAX
-enum INT_FAST64_MIN   INT64_MIN
-enum INT_FAST64_MAX   INT64_MAX
-enum UINT_FAST8_MAX   UINT8_MAX
-enum UINT_FAST16_MAX  UINT16_MAX
-enum UINT_FAST32_MAX  UINT32_MAX
-enum UINT_FAST64_MAX  UINT64_MAX
-
-// 7.18.2.4 Limits of integer types capable of holding object pointers
-#ifdef _WIN64 // [
-#  define INTPTR_MIN   INT64_MIN
-#  define INTPTR_MAX   INT64_MAX
-#  define UINTPTR_MAX  UINT64_MAX
-#else // _WIN64 ][
-#  define INTPTR_MIN   INT32_MIN
-#  define INTPTR_MAX   INT32_MAX
-#  define UINTPTR_MAX  UINT32_MAX
-#endif // _WIN64 ]
-
-// 7.18.2.5 Limits of greatest-width integer types
-enum INTMAX_MIN   INT64_MIN
-enum INTMAX_MAX   INT64_MAX
-enum UINTMAX_MAX  UINT64_MAX
-
-// 7.18.3 Limits of other integer types
-
-#ifdef _WIN64 // [
-#  define PTRDIFF_MIN  _I64_MIN
-#  define PTRDIFF_MAX  _I64_MAX
-#else  // _WIN64 ][
-#  define PTRDIFF_MIN  _I32_MIN
-#  define PTRDIFF_MAX  _I32_MAX
-#endif  // _WIN64 ]
-
-enum SIG_ATOMIC_MIN  INT_MIN
-enum SIG_ATOMIC_MAX  INT_MAX
-
-#ifndef SIZE_MAX // [
-#  ifdef _WIN64 // [
-#     define SIZE_MAX  _UI64_MAX
-#  else // _WIN64 ][
-#     define SIZE_MAX  _UI32_MAX
-#  endif // _WIN64 ]
-#endif // SIZE_MAX ]
-
-// WCHAR_MIN and WCHAR_MAX are also defined in <wchar.h>
-#ifndef WCHAR_MIN // [
-#  define WCHAR_MIN  0
-#endif  // WCHAR_MIN ]
-#ifndef WCHAR_MAX // [
-#  define WCHAR_MAX  _UI16_MAX
-#endif  // WCHAR_MAX ]
-
-enum WINT_MIN  0
-enum WINT_MAX  _UI16_MAX
-
-#endif // __STDC_LIMIT_MACROS ]
-
-
-// 7.18.4 Limits of other integer types
-
-#if !defined(__cplusplus) || defined(__STDC_CONSTANT_MACROS) // [   See footnote 224 at page 260
-
-// 7.18.4.1 Macros for minimum-width integer constants
-
-enum INT8_C(val)  val##i8
-enum INT16_C(val) val##i16
-enum INT32_C(val) val##i32
-enum INT64_C(val) val##i64
-
-enum UINT8_C(val)  val##ui8
-enum UINT16_C(val) val##ui16
-enum UINT32_C(val) val##ui32
-enum UINT64_C(val) val##ui64
-
-// 7.18.4.2 Macros for greatest-width integer constants
-enum INTMAX_C   INT64_C
-enum UINTMAX_C  UINT64_C
-
-#endif // __STDC_CONSTANT_MACROS ]
-
-
-#endif // _MSC_STDINT_H_ ]
-
-
-/*
- * \internal
- * Important API decorators:
- *   - a public API function
- *  AMQP_PUBLIC_VARIABLE - a public API external variable
- *  - calling convension (used on Win32)
- */
-
-#if defined(_WIN32) && defined(_MSC_VER)
-# if defined(AMQP_BUILD) && !defined(AMQP_STATIC)
-#  define  __declspec(dllexport)
-#  define AMQP_PUBLIC_VARIABLE __declspec(dllexport) extern
-# else
-#  define 
-#  if !defined(AMQP_STATIC)
-#   define AMQP_PUBLIC_VARIABLE __declspec(dllimport) extern
-#  else
-#   define AMQP_PUBLIC_VARIABLE extern
-#  endif
-# endif
-# define __cdecl
-
-#elif defined(_WIN32) && defined(__BORLANDC__)
-# if defined(AMQP_BUILD) && !defined(AMQP_STATIC)
-#  define  __declspec(dllexport)
-#  define AMQP_PUBLIC_VARIABLE __declspec(dllexport) extern
-# else
-#  define 
-#  if !defined(AMQP_STATIC)
-#   define AMQP_PUBLIC_VARIABLE __declspec(dllimport) extern
-#  else
-#   define AMQP_PUBLIC_VARIABLE extern
-#  endif
-# endif
-# define __cdecl
-
-#elif defined(_WIN32) && defined(__MINGW32__)
-# if defined(AMQP_BUILD) && !defined(AMQP_STATIC)
-#  define  __declspec(dllexport)
-#  define AMQP_PUBLIC_VARIABLE __declspec(dllexport) extern
-# else
-#  define 
-#  if !defined(AMQP_STATIC)
-#   define AMQP_PUBLIC_VARIABLE __declspec(dllimport) extern
-#  else
-#   define AMQP_PUBLIC_VARIABLE extern
-#  endif
-# endif
-# define __cdecl
-
-#elif defined(_WIN32) && defined(__CYGWIN__)
-# if defined(AMQP_BUILD) && !defined(AMQP_STATIC)
-#  define  __declspec(dllexport)
-#  define AMQP_PUBLIC_VARIABLE __declspec(dllexport)
-# else
-#  define 
-#  if !defined(AMQP_STATIC)
-#   define AMQP_PUBLIC_VARIABLE __declspec(dllimport) extern
-#  else
-#   define AMQP_PUBLIC_VARIABLE extern
-#  endif
-# endif
-# define __cdecl
-
-#elif defined(__GNUC__) && __GNUC__ >= 4
-# define  \
-  __attribute__ ((visibility ("default")))
-# define AMQP_PUBLIC_VARIABLE \
-  __attribute__ ((visibility ("default"))) extern
-# define AMQP_CALL
-#else
-# define 
-# define AMQP_PUBLIC_VARIABLE extern
-# define AMQP_CALL
-#endif
-
-#if __GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 1)
-# define AMQP_DEPRECATED(function) \
-  function __attribute__ ((__deprecated__))
-#elif defined(_MSC_VER)
-# define AMQP_DEPRECATED(function) \
-  __declspec(deprecated) function
-#else
-# define AMQP_DEPRECATED(function)
-#endif
-
-/* Define ssize_t on Win32/64 platforms
-   See: http://lists.cs.uiuc.edu/pipermail/llvmdev/2010-April/030649.html for details
-   */
-#if !defined(_W64)
-#if !defined(__midl) && (defined(_X86_) || defined(_M_IX86)) && _MSC_VER >= 1300
-enum _W64 __w64
-#else
-enum _W64
-#endif
-#endif
-
-typedef unsigned long long size_t;
-typedef long long ssize_t;
-
-#ifdef _MSC_VER
-#ifdef _WIN64
-typedef __int64 ssize_t;
-#else
-typedef _W64 int ssize_t;
-#endif
-#endif
-
-#if defined(_WIN32) && defined(__MINGW32__)
-#include <sys/types.h>
-#endif
-
-/** \endcond */
-+/
-
-extern(C):
-
-
-enum AMQP_VERSION_MAJOR=0;
-enum AMQP_VERSION_MINOR=8;
-enum AMQP_VERSION_PATCH=1;
-enum AMQP_VERSION_IS_RELEASE=0;
+enum AMQP_VERSION_MAJOR = 0;
+enum AMQP_VERSION_MINOR = 8;
+enum AMQP_VERSION_PATCH = 1;
+enum AMQP_VERSION_IS_RELEASE = 0;
 
 auto AMQP_VERSION_CODE(int major, int minor, int patch, int release)
 {
@@ -322,8 +55,8 @@ auto AMQP_VERSION_CODE(int major, int minor, int patch, int release)
 uint amqp_version_number();
 const(char)* amqp_version();
 enum AMQP_DEFAULT_FRAME_SIZE = 131072;
-enum AMQP_DEFAULT_MAX_CHANNELS=0;
-enum AMQP_DEFAULT_HEARTBEAT=0;
+enum AMQP_DEFAULT_MAX_CHANNELS = 0;
+enum AMQP_DEFAULT_HEARTBEAT = 0;
 alias amqp_boolean_t = int;
 alias amqp_method_number_t = uint;
 alias amqp_flags_t = uint;
@@ -385,10 +118,10 @@ struct amqp_table_entry_t
   amqp_field_value_t value;   /**< the table entry values */
 }
 
-enum amqp_field_value_kind_t
+enum
 {
   AMQP_FIELD_KIND_BOOLEAN = 't',  /**< boolean type. 0 = false, 1 = true @see amqp_boolean_t */
-  AMQP_FIELD_KIND_I8 = 'b',       /**< 8-bit signed integer, datatype: char */
+  AMQP_FIELD_KIND_I8 = 'b',       /**< 8-bit signed integer, datatype: char* */
   AMQP_FIELD_KIND_U8 = 'B',       /**< 8-bit unsigned integer, datatype: ubyte */
   AMQP_FIELD_KIND_I16 = 's',      /**< 16-bit signed integer, datatype: short */
   AMQP_FIELD_KIND_U16 = 'u',      /**< 16-bit unsigned integer, datatype: ushort */
@@ -410,7 +143,7 @@ enum amqp_field_value_kind_t
 struct amqp_pool_blocklist_t
 {
   int num_blocks;     /**< Number of blocks in the block list */
-  void **blocklist;   /**< Array of memory blocks */
+  void** blocklist;   /**< Array of memory blocks */
 }
 
 struct amqp_pool_t
@@ -475,19 +208,10 @@ enum
   AMQP_RESPONSE_NONE = 0,         /**< the library got an EOF from the socket */
   AMQP_RESPONSE_NORMAL,           /**< response normal, the RPC completed successfully */
   AMQP_RESPONSE_LIBRARY_EXCEPTION,/**< library error, an error occurred in the library, examine the library_error */
-  AMQP_RESPONSE_SERVER_EXCEPTION  /**< server exception, the broker returned an error, check replay */
+  AMQP_RESPONSE_SERVER_EXCEPTION,  /**< server exception, the broker returned an error, check replay */
 }
 
-enum ResponseType
-{
-	none = AMQP_RESPONSE_NONE,
-	normal = AMQP_RESPONSE_NORMAL,
-	libraryException = AMQP_RESPONSE_LIBRARY_EXCEPTION,
-	serverException = AMQP_RESPONSE_SERVER_EXCEPTION,
-}
-
-alias amqp_response_type_enum = ResponseType;
-
+alias amqp_response_type_enum = typeof(AMQP_RESPONSE_NORMAL);
 
 struct amqp_rpc_reply_t
 {
@@ -607,8 +331,8 @@ __gshared amqp_bytes_t amqp_empty_bytes;
 __gshared amqp_table_t amqp_empty_table;
 __gshared amqp_array_t amqp_empty_array;
 
-alias AMQP_EMPTY_BYTES= amqp_empty_bytes;
-alias AMQP_EMPTY_TABLE= amqp_empty_table;
+alias AMQP_EMPTY_BYTES = amqp_empty_bytes;
+alias AMQP_EMPTY_TABLE = amqp_empty_table;
 alias AMQP_EMPTY_ARRAY = amqp_empty_array;
 void init_amqp_pool(amqp_pool_t *pool, size_t pagesize);
 void recycle_amqp_pool(amqp_pool_t *pool);
@@ -690,16 +414,16 @@ void amqp_destroy_envelope(amqp_envelope_t *envelope);
 
 struct amqp_connection_info
 {
-  char *user;                 /**< the username to authenticate with the broker, default on most broker is 'guest' */
-  char *password;             /**< the password to authenticate with the broker, default on most brokers is 'guest' */
-  char *host;                 /**< the hostname of the broker */
-  char *vhost;                /**< the virtual host on the broker to connect to, a good default is "/" */
+  char* user;                 /**< the username to authenticate with the broker, default on most broker is 'guest' */
+  char* password;             /**< the password to authenticate with the broker, default on most brokers is 'guest' */
+  char* host;                 /**< the hostname of the broker */
+  char* vhost;                /**< the virtual host on the broker to connect to, a good default is "/" */
   int port;                   /**< the port that the broker is listening on, default on most brokers is 5672 */
   amqp_boolean_t ssl;
 }
 
 void amqp_default_connection_info(amqp_connection_info* parsed);
-int amqp_parse_url(char *url, amqp_connection_info* parsed);
+int amqp_parse_url(char* url, amqp_connection_info* parsed);
 int amqp_socket_open(amqp_socket_t *self, const(char)*host, int port);
 int amqp_socket_open_noblock(amqp_socket_t *self, const(char)*host, int port, timeval* timeout);
 int amqp_socket_get_sockfd(amqp_socket_t *self);
@@ -908,138 +632,8 @@ int amqp_try_recv(amqp_connection_state_t state);
 pragma(inline,true)
 void *amqp_offset(void *data, size_t offset)
 {
-  return cast(char *)data + offset;
+  return cast(char* )data + offset;
 }
-
-/+
-/* This macro defines the encoding and decoding functions associated with a
-   simple type. */
-
-enum DECLARE_CODEC_BASE_TYPE(bits, htonx, ntohx)                           \
-                                                                              \
-  static inline void amqp_e##bits(void *data, size_t offset,                  \
-                                  uint##bits##_t val)                         \
-  {                                                                           \
-    /* The AMQP data might be unaligned. So we encode and then copy the       \
-             result into place. */                                            \
-    uint##bits##_t res = htonx(val);                                          \
-    memcpy(amqp_offset(data, offset), &res, bits/8);                          \
-  }                                                                           \
-                                                                              \
-  static inline uint##bits##_t amqp_d##bits(void *data, size_t offset)        \
-  {                                                                           \
-    /* The AMQP data might be unaligned.  So we copy the source value         \
-             into a variable and then decode it. */                           \
-    uint##bits##_t val;                                                       \
-    memcpy(&val, amqp_offset(data, offset), bits/8);                          \
-    return ntohx(val);                                                        \
-  }                                                                           \
-                                                                              \
-  static inline int amqp_encode_##bits(amqp_bytes_t encoded, size_t *offset,  \
-                                       uint##bits##_t input)                  \
-                                                                              \
-  {                                                                           \
-    size_t o = *offset;                                                       \
-    if ((*offset = o + bits / 8) <= encoded.len) {                            \
-      amqp_e##bits(encoded.bytes, o, input);                                  \
-      return 1;                                                               \
-    }                                                                         \
-    else {                                                                    \
-      return 0;                                                               \
-    }                                                                         \
-  }                                                                           \
-                                                                              \
-  static inline int amqp_decode_##bits(amqp_bytes_t encoded, size_t *offset,  \
-                                       uint##bits##_t *output)                \
-                                                                              \
-  {                                                                           \
-    size_t o = *offset;                                                       \
-    if ((*offset = o + bits / 8) <= encoded.len) {                            \
-      *output = amqp_d##bits(encoded.bytes, o);                               \
-      return 1;                                                               \
-    }                                                                         \
-    else {                                                                    \
-      return 0;                                                               \
-    }                                                                         \
-  }
-
-/* Determine byte order */
-#if defined(__GLIBC__)
-# include <endian.h>
-# if (__BYTE_ORDER == __LITTLE_ENDIAN)
-#  define AMQP_LITTLE_ENDIAN
-# elif (__BYTE_ORDER == __BIG_ENDIAN)
-#  define AMQP_BIG_ENDIAN
-# else
-/* Don't define anything */
-# endif
-#elif defined(_BIG_ENDIAN) && !defined(_LITTLE_ENDIAN) ||                   \
-      defined(__BIG_ENDIAN__) && !defined(__LITTLE_ENDIAN__)
-# define AMQP_BIG_ENDIAN
-#elif defined(_LITTLE_ENDIAN) && !defined(_BIG_ENDIAN) ||                   \
-      defined(__LITTLE_ENDIAN__) && !defined(__BIG_ENDIAN__)
-# define AMQP_LITTLE_ENDIAN
-#elif defined(__hppa__) || defined(__HPPA__) || defined(__hppa) ||          \
-      defined(_POWER) || defined(__powerpc__) || defined(__ppc___) ||       \
-      defined(_MIPSEB) || defined(__s390__) ||                              \
-      defined(__sparc) || defined(__sparc__)
-# define AMQP_BIG_ENDIAN
-#elif defined(__alpha__) || defined(__alpha) || defined(_M_ALPHA) ||        \
-      defined(__amd64__) || defined(__x86_64__) || defined(_M_X64) ||       \
-      defined(__ia64) || defined(__ia64__) || defined(_M_IA64) ||           \
-      defined(__arm__) || defined(_M_ARM) ||                                \
-      defined(__i386__) || defined(_M_IX86)
-# define AMQP_LITTLE_ENDIAN
-#else
-/* Don't define anything */
-#endif
-
-#if defined(AMQP_LITTLE_ENDIAN)
-
-enum DECLARE_XTOXLL(func)                        \
-  static inline ulong func##ll(ulong val)     \
-  {                                                 \
-    union {                                         \
-      ulong whole;                               \
-      uint halves[2];                           \
-    } u;                                            \
-    uint t;                                     \
-    u.whole = val;                                  \
-    t = u.halves[0];                                \
-    u.halves[0] = func##l(u.halves[1]);             \
-    u.halves[1] = func##l(t);                       \
-    return u.whole;                                 \
-  }
-
-#elif defined(AMQP_BIG_ENDIAN)
-
-enum DECLARE_XTOXLL(func)                        \
-  static inline ulong func##ll(ulong val)     \
-  {                                                 \
-    union {                                         \
-      ulong whole;                               \
-      uint halves[2];                           \
-    } u;                                            \
-    u.whole = val;                                  \
-    u.halves[0] = func##l(u.halves[0]);             \
-    u.halves[1] = func##l(u.halves[1]);             \
-    return u.whole;                                 \
-  }
-
-#else
-# error Endianness not known
-#endif
-
-#ifndef HAVE_HTONLL
-DECLARE_XTOXLL(hton)
-DECLARE_XTOXLL(ntoh)
-#endif
-
-DECLARE_CODEC_BASE_TYPE(8, (ubyte), (ubyte))
-DECLARE_CODEC_BASE_TYPE(16, htons, ntohs)
-DECLARE_CODEC_BASE_TYPE(32, htonl, ntohl)
-DECLARE_CODEC_BASE_TYPE(64, htonll, ntohll)
-+/
 
 pragma(inline,true)
 int amqp_encode_bytes(amqp_bytes_t encoded, size_t *offset, amqp_bytes_t input)
@@ -1079,10 +673,10 @@ int amqp_bytes_equal(amqp_bytes_t r, amqp_bytes_t l);
 pragma(inline,true)
 amqp_rpc_reply_t amqp_rpc_reply_error(amqp_status_enum status)
 {
-  amqp_rpc_reply_t reply;
-  reply.reply_type = ResponseType.libraryException;
-  reply.library_error = status;
-  return reply;
+	amqp_rpc_reply_t reply;
+	reply.reply_type = AMQP_RESPONSE_LIBRARY_EXCEPTION;
+	reply.library_error = status;
+	return reply;
 }
 
 int amqp_send_frame_inner(amqp_connection_state_t state, const amqp_frame_t *frame, int flags, amqp_time_t deadline);
@@ -1097,11 +691,13 @@ enum amqp_hostname_validation_result
   AMQP_HVR_MALFORMED_CERTIFICATE,
   AMQP_HVR_ERROR
 }
+
 version(OpenSSL)
 {
 	amqp_hostname_validation_result amqp_ssl_validate_hostname(const(char)*hostname, const X509* server_cert);
 	BIO_METHOD* amqp_openssl_bio();
 }
+
 enum amqp_hostcheck_result
 {
   AMQP_HCR_NO_MATCH = 0,
@@ -1146,8 +742,8 @@ const(char)*  amqp_constant_name(int constantNumber);
 amqp_boolean_t amqp_constant_is_hard_error(int constantNumber);
 const(char)*  amqp_method_name(amqp_method_number_t methodNumber);
 amqp_boolean_t amqp_method_has_content(amqp_method_number_t methodNumber);
-int amqp_decode_method(amqp_method_number_t methodNumber, amqp_pool_t *pool, amqp_bytes_t encoded, void **decoded);
-int amqp_decode_properties(ushort class_id, amqp_pool_t *pool, amqp_bytes_t encoded, void **decoded);
+int amqp_decode_method(amqp_method_number_t methodNumber, amqp_pool_t *pool, amqp_bytes_t encoded, void** decoded);
+int amqp_decode_properties(ushort class_id, amqp_pool_t *pool, amqp_bytes_t encoded, void** decoded);
 int amqp_encode_method(amqp_method_number_t methodNumber, void *decoded, amqp_bytes_t encoded);
 int amqp_encode_properties(ushort class_id, void *decoded, amqp_bytes_t encoded);
 enum amqp_method_number_t AMQP_CONNECTION_START_METHOD = 0x000A000A;
@@ -1198,7 +794,7 @@ struct amqp_connection_tune_ok_t
   ushort heartbeat; /**< heartbeat */
 }
 
-enum amqp_method_number_tAMQP_CONNECTION_OPEN_METHOD= 0x000A0028;
+enum amqp_method_number_t AMQP_CONNECTION_OPEN_METHOD= 0x000A0028;
 struct amqp_connection_open_t
 {
   amqp_bytes_t virtual_host; /**< virtual-host */
@@ -1748,20 +1344,5 @@ DWORD pthread_self();
 int pthread_mutex_init(pthread_mutex_t *, void *attr);
 int pthread_mutex_lock(pthread_mutex_t *);
 int pthread_mutex_unlock(pthread_mutex_t *);
-
-
-amqp_bytes_t amqp_string(string s)
-{
-	import std.string: toStringz;
-	return s.toStringz.amqp_cstring_bytes;
-}
-
-amqp_bytes_t asRabbit(ubyte[] buf)
-{
-	amqp_bytes_t ret;
-	ret.len = buf.length;
-	ret.bytes = cast(void*) buf.ptr;
-	return ret;
-}
 
 

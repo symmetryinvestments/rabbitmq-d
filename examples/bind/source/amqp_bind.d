@@ -1,11 +1,10 @@
-module amqp_.bind;
+module rabbitmq.examples.bind;
 import std.stdio;
 import std.string;
 import std.conv:to;
 import std.exception;
 
-import kaleidic.api.rabbitmq;
-import kaleidic.api.rabbitmq.utils;
+import symmetry.api.rabbitmq;
 
 
 int main(string[] args)

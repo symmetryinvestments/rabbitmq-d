@@ -1,10 +1,9 @@
-module amqp_consumer;
+module rabbitmq.examples.amqp_consumer;
 import std.stdio;
 import std.string;
 import std.conv:to;
 
-import kaleidic.api.rabbitmq;
-import kaleidic.api.rabbitmq.utils;
+import symmetry.api.rabbitmq;
 
 
 enum SUMMARY_EVERY_US = 1000000;

@@ -1,12 +1,11 @@
-module listenq;
+module rabbitmq.examples.listenq;
 import std.stdio;
 import std.string;
 import std.exception;
 import std.conv:to;
 import std.getopt;
 
-import kaleidic.api.rabbitmq;
-import kaleidic.api.rabbitmq.utils;
+import symmetry.api.rabbitmq;
 
 struct Options
 {

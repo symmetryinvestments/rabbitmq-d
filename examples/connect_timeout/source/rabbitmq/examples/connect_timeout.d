@@ -1,12 +1,11 @@
-module connect_timeout;
+module rabbitmq.examples.connect_timeout;
 import std.stdio;
 import std.string;
 import std.conv:to;
 import std.exception;
 import std.getopt;
 
-import kaleidic.api.rabbitmq;
-import kaleidic.api.rabbitmq.utils;
+import symmetry.api.rabbitmq;
 
 struct Options
 {

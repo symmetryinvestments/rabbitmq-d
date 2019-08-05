@@ -1,6 +1,7 @@
-module kaleidic.api.rabbitmq.utils;
-import kaleidic.api.rabbitmq;
-public import kaleidic.api.rabbitmq.platform_utils;
+module symmetry.api.rabbitmq.utils;
+import symmetry.api.rabbitmq.bindings;
+import symmetry.api.rabbitmq.enums;
+public import symmetry.api.rabbitmq.platform_utils;
 import std.stdio:writeln,writef,stderr;
 import std.ascii;
 import core.stdc.stdarg;
@@ -37,7 +38,7 @@ void die_on_error(int x, string context)
 void die_on_amqp_error(amqp_rpc_reply_t x, string context)
 {
 	import std.stdio:stderr;
-	switch (x.reply_type) with (ResponseType)
+	switch (x.reply_type) with (RabbitResponseType)
 	{
 		case normal:
 			return;

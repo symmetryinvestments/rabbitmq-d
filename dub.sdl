@@ -1,7 +1,7 @@
 name "rabbitmq"
-description "Binding for librabbitmq-c"
+description "Bindings and high-level wrapper for librabbitmq-c"
 authors "Laeeth Isharc"
-copyright "Copyright © 2017,2018,2019, Laeeth Isharc and Kaleidic Associates"
+copyright "Copyright © 2017,2018,2019, Laeeth Isharc, Kaleidic Associates and Symmetry Investments"
 license "Boost"
 sourcePath "source"
 libs "rabbitmq"
@@ -12,5 +12,7 @@ configuration "openssl" {
   dependency "openssl" version="*"
 }
 
-configuration "no-openssl" {
+configuration "no-openssl-vibe" {
+	dependency "vibe-d" version="~>0.8.5"
+	versions "UseVibe"
 }

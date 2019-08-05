@@ -1,15 +1,14 @@
-module exchange_declare;
-import std.stdio;
-import std.string;
-import std.exception;
-import std.conv:to;
+module rabbitmq.examples.exchange_declare;
 
-import kaleidic.api.rabbitmq;
-import kaleidic.api.rabbitmq.utils;
+import symmetry.api.rabbitmq;
 
 
 int main(string[] args)
 {
+	import std.stdio;
+	import std.string;
+	import std.exception;
+	import std.conv:to;
 	if (args.length < 5)
 	{
 		stderr.writeln("Usage: amqp_exchange_declare host port exchange exchangetype");
