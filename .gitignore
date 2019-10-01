@@ -25,3 +25,4 @@ docs/
 
 .gitignore
 dub.selections.json
+rabbitmq-test-openssl
