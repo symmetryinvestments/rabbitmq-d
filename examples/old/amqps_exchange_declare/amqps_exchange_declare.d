@@ -2,7 +2,7 @@ module kaleidic.api.rabbitmq.examples.bind;
 import std.stdio;
 import std.string;
 
-import kaleidic.api.rabbitmq.rabbitmq;
+import symmetry.api.rabbitmq.rabbitmq;
 import utils;
 
 int main(string[] args)

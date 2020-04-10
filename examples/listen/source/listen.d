@@ -5,7 +5,7 @@ import std.exception;
 import std.conv:to;
 import std.getopt;
 
-import kaleidic.api.rabbitmq;
+import symmetry.api.rabbitmq;
 
 struct Options
 {
@@ -46,7 +46,7 @@ int main(string[] args)
 					"key-file",	&options.keyFile,
 					"cert-file",	&options.certFile,
 	);
-	
+
 	if (helpInformation.helpWanted)
 	{
 		defaultGetoptPrinter("listen",helpInformation.options);
@@ -147,4 +147,3 @@ private char[] fromBytes(void* ptr, ulong len)
 	return ret.data;
 	+/
 }
-
