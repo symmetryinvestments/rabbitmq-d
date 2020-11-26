@@ -1,6 +1,6 @@
 module symmetry.api.rabbitmq.platform_utils;
 import std.conv:to;
-// import kaleidic.api.rabbitmq;
+// import symmetry.api.rabbitmq;
 
 /+
 	#include <stdint.h>

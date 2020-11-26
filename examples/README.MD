@@ -1,11 +1,19 @@
 Arrange for a RabbitMQ or other AMQP server to be running on localhost at TCP port number 5672.
 
+Also make sure that you have librabbitmq-c installed on your system.
+
 In one terminal, run
 
-./examples/listen --hostname localhost --port 5672 --exchange amq.direct --binding-key test --use-ssl=false
+    cd examples/listen
+    dub build
+    ./listen --hostname localhost --port 5672 --exchange amq.direct --binding-key test --use-ssl=false
+
+
 In another terminal,
 
-./examples/sendstring --hostname localhost --port 5672 --exchange amq.direct --routing-key test --message-body "hello world" --use-ssl=false
+  cd examples/sendstring
+  dub build
+  ./sendstring --hostname localhost --port 5672 --exchange amq.direct --routing-key test --message-body "hello world" --use-ssl=false
 
 You should see output similar to the following in the listener's terminal window:
 
