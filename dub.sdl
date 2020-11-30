@@ -12,6 +12,9 @@ configuration "openssl" {
   dependency "openssl" version="*"
 }
 
+configuration "no-openssl" {
+}
+
 // commented out for now because the only use of
 // vibe in the code is protected by "HaveVibe",
 // not "Have_vibe" (what dub generates) or
