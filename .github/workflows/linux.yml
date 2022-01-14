@@ -1,0 +1,34 @@
+name: Run rabbitmq-d tests
+on: [push, pull_request]
+
+jobs:
+  test:
+    name: Dub Tests
+    strategy:
+      matrix:
+        build: [debug, release]
+        os: [ubuntu-latest, ubuntu-20.04]
+        dc: [dmd-latest, ldc-latest, dmd-2.085.0, ldc-1.17.0]
+
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install rabbitmq
+        run:  sudo apt install -y librabbitmq-dev
+
+      - name: Install D compiler
+        uses: dlang-community/setup-dlang@v1
+        with:
+          compiler: ${{ matrix.dc }}
+
+      - name: Debug/Release
+        run: dub test --build=${{ matrix.build }}
+
+      - name: Run dub tests with coverage enabled.
+        run: dub test -c no-openssl --build=unittest-cov
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v2
+        with:
+          verbose: true
