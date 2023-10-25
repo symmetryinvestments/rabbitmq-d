@@ -2,16 +2,17 @@ module symmetry.api.rabbitmq.utils;
 import symmetry.api.rabbitmq.bindings;
 import symmetry.api.rabbitmq.enums;
 public import symmetry.api.rabbitmq.platform_utils;
-import std.stdio:writeln,writef,stderr;
+import std.stdio:writeln,writef;
 import std.ascii;
 import core.stdc.stdarg;
-import core.stdc.stdio:stderr,printf,vfprintf;
+import core.stdc.stdio:printf,vfprintf;
 import std.exception;
 import std.format:format;
 
 /+
 void die(T...)(string formatString,T args)
 {
+	import std.stdio:stderr;
 	stderr.writefln(formatString,args);
 	throw new Exception("");
 }
@@ -37,7 +38,6 @@ void die_on_error(int x, string context)
 }
 void die_on_amqp_error(amqp_rpc_reply_t x, string context)
 {
-	import std.stdio:stderr;
 	switch (x.reply_type) with (RabbitResponseType)
 	{
 		case normal:
